@@ -1,9 +1,13 @@
 package cmd;
-//Tenkaichi LPS Generator v1.0 by ViveTheModder
+import java.awt.Desktop;
+//Tenkaichi LPS Generator v1.1 by ViveTheModder
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -14,7 +18,7 @@ public class Main
 {
 	static boolean isForWii=false;
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
-	static int numPakContents;
+	public static int numPakContents, pakTotal=0, threshold=45, wavTotal=0;
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
 	{
 		RandomAccessFile pak = new RandomAccessFile(pakRef,"r");
@@ -76,7 +80,7 @@ public class Main
 			double time = i/24000.0; //current fraction of a secnd
 			short currFrame = (short) Math.round(time*60);
 			//test open & closed ranges by filtering the results (this could also be done with a boolean variable lol)
-			if (db<45) mouthCond="Closed";
+			if (db<threshold) mouthCond="Closed";
 			else mouthCond="Open";
 			if (prevFrame!=currFrame) 
 			{
@@ -92,6 +96,78 @@ public class Main
 		short[] keyframes = new short[numKeyframes];
 		for (int i=0; i<numKeyframes; i++) keyframes[i] = list.get(i);
 		return keyframes;
+	}
+	public static void assignLpsToPak(File[] pakFiles, File[] wavFiles) throws UnsupportedAudioFileException, IOException
+	{
+		int cnt=0;
+		pakTotal = pakFiles.length; wavTotal = wavFiles.length;
+		if (gui.App.bar!=null) gui.App.bar.setMaximum(pakTotal*wavTotal);
+		for (File wav: wavFiles)
+		{
+			String wavName = wav.getName().replace(".wav", "");
+			String[] wavNameArray = wavName.split("_");
+			short[] keyframes = getLpsKeyframes(wav);
+			short[] openMouthIntervals = new short[(keyframes.length-1)/2];
+			int intervalIndex=0, displacement=0;
+			
+			for (int i=0; i<keyframes.length; i+=2)
+			{
+				if (startsClosed==true) displacement=1;
+				if (intervalIndex<openMouthIntervals.length) 
+					openMouthIntervals[intervalIndex] = (short) (keyframes[i+1+displacement]-keyframes[i+displacement]);
+				intervalIndex++;
+			}
+			//filter keyframes based on open mouth intervals
+			int numKeyframes = keyframes.length;
+			for (int i=0; i<openMouthIntervals.length; i++)
+			{
+				int remainingKeyframesSize = numKeyframes-(i+displacement+3);
+				if (openMouthIntervals[i]==1 && remainingKeyframesSize>1) //exclude keyframes with a difference/interval of 1 frame
+				{
+					short[] remainingKeyframes = new short[remainingKeyframesSize];
+					System.arraycopy(keyframes, i+4, remainingKeyframes, 0, remainingKeyframes.length);
+					numKeyframes-=2;
+					System.arraycopy(remainingKeyframes, 0, keyframes, i+displacement+1, remainingKeyframes.length);
+				}
+			}
+			byte[] lpsContents = getLpsFileContents(keyframes,numKeyframes);
+			for (File pak: pakFiles)
+			{
+				int wavID;
+				String pakName = pak.getName().toLowerCase();
+				//check delimiter (underscore or hyphen/dash/minus)
+				if (wavName.contains("_")) wavNameArray = wavName.split("_");
+				else if (wavName.contains("-")) wavNameArray = wavName.split("-");
+				else continue;
+				//check if name ends with US/JP (region) to then get the WAV ID (zero-indexed)
+				if (wavName.endsWith("US") || wavName.endsWith("JP")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-2]);
+				else wavID = Integer.parseInt(wavNameArray[wavNameArray.length-1]);
+				//check if current PAK file is a costume file, then change the WAV ID based on the WAV's language
+				if (isCharaCostumePak(pak))
+				{
+					String charaNameFromPak=null;
+					if (pakName.endsWith("p.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-7);
+					else if (pakName.endsWith("p_dmg.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-11);
+					String charaNameFromWav = wavName.substring(0, wavName.length()-7).toLowerCase();
+					int newWavID=wavID;
+					if (wavNameArray[wavNameArray.length-1].endsWith("US")) newWavID=152+(wavID%500);
+					else if (wavNameArray[wavNameArray.length-1].endsWith("JP")) newWavID=52+(wavID%500);
+					if (numPakContents==250) newWavID-=4; //this only applies to Budokai Tenkaichi 2's character costumes
+					//only overwrite current character costume PAK if the character name matches with the one from the WAV
+					if (charaNameFromPak.equals(charaNameFromWav)) 
+					{
+						System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
+						overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
+					}
+				}
+				else 
+				{
+					overwritePakFile(pak, lpsContents, wavID); cnt+=2;
+				}
+				//increment progress bar percentage
+				if (gui.App.bar!=null) gui.App.bar.setValue(cnt);
+			}
+		}
 	}
 	private static void overwritePakFile(File pakRef, byte[] lpsContents, int id) throws IOException
 	{
@@ -134,113 +210,72 @@ public class Main
 			pak.write(lpsContents);
 		}
 	}
+	public static void setErrorLog(Exception e)
+	{
+		File errorLog = new File("errors.log");
+		try {
+			FileWriter logWriter = new FileWriter(errorLog,true);
+			logWriter.append(new SimpleDateFormat("dd-MM-yy-hh-mm-ss").format(new Date())+":\n"+e.getClass().getSimpleName()+": "+e.getMessage()+"\n");
+			logWriter.close();
+			Desktop.getDesktop().open(errorLog);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		System.exit(1);
+	}
 	public static void main(String[] args) 
 	{
 		long start = System.currentTimeMillis();
-		if (args.length>0 && (args[0].equals("-w") || args[0].equals("-wii"))) isForWii=true;
-		try 
+		if (args.length>0)
 		{
-			Scanner sc = new Scanner(System.in);
-			String input;
-			File[] pakFiles, wavFiles;
-			while (true)
+			if (args[0].equals("-w") || args[0].equals("-wii")) isForWii=true;
+			else if (args[0].equals("-p") || args[0].equals("-ps2")) isForWii=false;
+			try 
 			{
-				System.out.println("Enter a valid directory containing PAK files:");
-				input = sc.nextLine();
-				File pakDir = new File(input);
-				if (pakDir.isDirectory()) //exclude ANM, EFF and Voice PAKs from the filter
+				Scanner sc = new Scanner(System.in);
+				String input;
+				File[] pakFiles, wavFiles;
+				while (true)
 				{
-					pakFiles = pakDir.listFiles((dir, name) -> 
-					(name.toLowerCase().endsWith(".pak") && 
-					!(name.toLowerCase().contains("anm") || name.toLowerCase().contains("eff") || name.toLowerCase().contains("voice"))));
-					if (pakFiles.length==0) System.out.println("Directory does NOT contain PAK files. Try again!\n");
-					else break;
+					System.out.println("Enter a valid directory containing PAK files:");
+					input = sc.nextLine();
+					File pakDir = new File(input);
+					if (pakDir.isDirectory()) //exclude ANM, EFF and Voice PAKs from the filter
+					{
+						pakFiles = pakDir.listFiles((dir, name) -> 
+						(name.toLowerCase().endsWith(".pak") && 
+						!(name.toLowerCase().contains("anm") || name.toLowerCase().contains("eff") || name.toLowerCase().contains("voice"))));
+						if (pakFiles.length==0) System.out.println("Directory does NOT contain PAK files. Try again!\n");
+						else break;
+					}
+					else System.out.println("Invalid directory. Try again!\n");
 				}
-				else System.out.println("Invalid directory. Try again!\n");
-			}
-			while (true)
-			{
-				System.out.println("Enter a valid directory containing WAV files:");
-				input = sc.nextLine();
-				File wavDir = new File(input);
-				if (wavDir.isDirectory())
+				while (true)
 				{
-					wavFiles = wavDir.listFiles((dir, name) -> (name.toLowerCase().endsWith(".wav")));
-					if (wavFiles.length==0) System.out.println("Directory does NOT contain WAV files. Try again!\n");
-					else break;
+					System.out.println("Enter a valid directory containing WAV files:");
+					input = sc.nextLine();
+					File wavDir = new File(input);
+					if (wavDir.isDirectory())
+					{
+						wavFiles = wavDir.listFiles((dir, name) -> (name.toLowerCase().endsWith(".wav")));
+						if (wavFiles.length==0) System.out.println("Directory does NOT contain WAV files. Try again!\n");
+						else break;
+					}
 				}
-			}
-			sc.close();
-			
-			long startLPS = System.currentTimeMillis();
-			for (File wav: wavFiles)
-			{
-				String wavName = wav.getName().replace(".wav", "");
-				String[] wavNameArray = wavName.split("_");
-				short[] keyframes = getLpsKeyframes(wav);
-				short[] openMouthIntervals = new short[(keyframes.length-1)/2];
-				int intervalIndex=0, displacement=0;
+				sc.close();
 				
-				for (int i=0; i<keyframes.length; i+=2)
-				{
-					if (startsClosed==true) displacement=1;
-					if (intervalIndex<openMouthIntervals.length) 
-						openMouthIntervals[intervalIndex] = (short) (keyframes[i+1+displacement]-keyframes[i+displacement]);
-					intervalIndex++;
-				}
-				//filter keyframes based on open mouth intervals
-				int numKeyframes = keyframes.length;
-				for (int i=0; i<openMouthIntervals.length; i++)
-				{
-					if (openMouthIntervals[i]==1) //exclude keyframes with a difference/interval of 1 frame
-					{
-						short[] remainingKeyframes = new short[numKeyframes-(i+displacement+3)];
-						System.arraycopy(keyframes, i+4, remainingKeyframes, 0, remainingKeyframes.length);
-						numKeyframes-=2;
-						System.arraycopy(remainingKeyframes, 0, keyframes, i+displacement+1, remainingKeyframes.length);
-					}
-				}
-				byte[] lpsContents = getLpsFileContents(keyframes,numKeyframes);
-				for (File pak: pakFiles)
-				{
-					int wavID;
-					String pakName = pak.getName().toLowerCase();
-					//check delimiter (underscore or hyphen/dash/minus)
-					if (wavName.contains("_")) wavNameArray = wavName.split("_");
-					else if (wavName.contains("-")) wavNameArray = wavName.split("-");
-					else continue;
-					//check if name ends with US/JP (region) to then get the WAV ID (zero-indexed)
-					if (wavName.endsWith("US") || wavName.endsWith("JP")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-2]);
-					else wavID = Integer.parseInt(wavNameArray[wavNameArray.length-1]);
-					//check if current PAK file is a costume file, then change the WAV ID based on the WAV's language
-					if (isCharaCostumePak(pak))
-					{
-						String charaNameFromPak=null;
-						if (pakName.endsWith("p.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-7);
-						else if (pakName.endsWith("p_dmg.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-11);
-						String charaNameFromWav = wavName.substring(0, wavName.length()-7).toLowerCase();
-						int newWavID=wavID;
-						if (wavNameArray[wavNameArray.length-1].endsWith("US")) newWavID=152+(wavID%500);
-						else if (wavNameArray[wavNameArray.length-1].endsWith("JP")) newWavID=52+(wavID%500);
-						if (numPakContents==250) newWavID-=4; //this only applies to Budokai Tenkaichi 2's character costumes
-						//only overwrite current character costume PAK if the character name matches with the one from the WAV
-						if (charaNameFromPak.equals(charaNameFromWav)) 
-						{
-							System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
-							overwritePakFile(pak, lpsContents, newWavID);
-						}
-					}
-					else overwritePakFile(pak, lpsContents, wavID);
-				}
+				long startLPS = System.currentTimeMillis();
+				assignLpsToPak(pakFiles, wavFiles);
+				long endLPS = System.currentTimeMillis();
+				long end = System.currentTimeMillis();
+				System.out.println("\nTotal Execution Time: "+(end-start)/1000.0+" s");
+				System.out.println("LIPS Automation Time: "+(endLPS-startLPS)/1000.0+" s");
+			} 
+			catch (UnsupportedAudioFileException | IOException e) 
+			{
+				setErrorLog(e);
 			}
-			long endLPS = System.currentTimeMillis();
-			long end = System.currentTimeMillis();
-			System.out.println("\nTotal Execution Time: "+(end-start)/1000.0+" s");
-			System.out.println("LIPS Automation Time: "+(endLPS-startLPS)/1000.0+" s");
-		} 
-		catch (UnsupportedAudioFileException | IOException e) 
-		{
-			e.printStackTrace();
 		}
+		else gui.App.main(null);
 	}
 }
