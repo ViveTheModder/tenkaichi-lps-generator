@@ -1,9 +1,11 @@
 # tenkaichi-lps-generator
-A modding tool for DBZ Budokai Tenkaichi 2 &amp; 3 that automatically generates and assigns LPS files (for lip-syncing) to PAK files containing them (mainly character costumes).
+A modding tool (supporting both CLI and GUI) for DBZ Budokai Tenkaichi 2 &amp; 3 (both PS2 and Wii versions) that automatically generates and assigns LPS files (for lip-syncing) to PAK files containing them (mainly character costumes).
 
 Recommended to be used on WAV files with a sample rate/frequency of 24000 Hz, obtained from converting ADX files to WAV with [PESSFC](https://www.moddingway.com/file/1640.html).
 
-The tool will only work as intended on PAK files that clearly belong to the character's costume (has to end with ``Xp.pak`` or ``Xp_dmg.pak``, where ``X`` is the costume number from 1 to 4).
+The tool will work as intended on PAK files that clearly belong to the character's costume (has to end with ``Xp.pak`` or ``Xp_dmg.pak``, where ``X`` is the costume number from 1 to 4).
+
+It works on other PAKs as well, like the ones used in Dragon History (e.g. ``LPS-XX-B-YY.pak``) and menu files (not recommended unless the WAVs are renamed accordingly, because every even LPS is for Japanese voices, while the odd LPS files correspond to the English voices).
 
 Also, the character's name in the WAV files has to match the character's name in the PAK files in order for any changes to be made. 
 
@@ -13,6 +15,7 @@ Because the program gets the audio file ID from the WAV's file name, it has to b
 * X ---> Name (of a character, menu, scenario etc.);
 * YYY -> 3-digit number (this is the audio file ID);
 * ZZ --> Region (either US or JP; this only really matters for the character costume files).
+
 # Introduction
 ## Origin
 Back when I was "hired" by Team BT4 to help with localization (aka the International Version), I had to do all the lip-syncing manually.
@@ -46,9 +49,29 @@ Everything else from this point was purely my idea:
 * Filter out the results once more by calculating the difference/interval of every 2 keyframes and effectively skipping keyframes that only have an interval of 1 frame.
 
 # Demonstration
+## CLI
+This version does not let the user change the threshold. It is set to 45 dB by default.
 ![bt-lps-gen-1](https://github.com/user-attachments/assets/9c8a839b-19c6-4aac-a2d7-f95442ee2964)
 
 ![bt-lps-gen-2](https://github.com/user-attachments/assets/e8826733-3d69-4c58-8627-4aa7bcda6fdb)
+
+## GUI
+Not shown in the screenshot, but I changed the threshold to 25 dB. It would have been 45 dB otherwise.
+![image](https://github.com/user-attachments/assets/b26129d6-a80d-4651-baab-00fd88800598)
+
+![image](https://github.com/user-attachments/assets/2d398cd3-4700-4a36-a8ff-d52f976ff214)
+
+![image](https://github.com/user-attachments/assets/f2d55b9c-3585-4634-87cd-b3805f248b78)
+
+![image](https://github.com/user-attachments/assets/20839b7d-c615-4c28-924c-3d45491ce3ec)
+
+![image](https://github.com/user-attachments/assets/48ca20d9-3998-427f-8c4e-b5ed6aed1f50)
+
+![image](https://github.com/user-attachments/assets/7cdd47ee-ef36-4926-a651-74b370fee7e1)
+
+![image](https://github.com/user-attachments/assets/c54e941a-6d42-488d-b1fb-5607abe97ad4)
+
+![image](https://github.com/user-attachments/assets/723e7613-3377-437b-8dc1-7ece35a0f615)
 
 # Results
 Here is a file comparison of two character costume files that will be used for an upcoming mod...
