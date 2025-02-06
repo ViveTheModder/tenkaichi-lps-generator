@@ -1,6 +1,10 @@
 # tenkaichi-lps-generator
 A modding tool (supporting both CLI and GUI) for DBZ Budokai Tenkaichi 2 &amp; 3 (both PS2 and Wii versions) that automatically generates and assigns LPS files (for lip-syncing) to PAK files containing them (mainly character costumes).
 
+To run it from the terminal (or Command Prompt), type in the following command: ``java -jar bt-lps-gen.jar -ps2``.
+
+Other arguments can be used, such as ``-p`` (short for PS2), ``-wii`` (to enable Big Endian support) and ``-w`` (short for Wii).
+
 Recommended to be used on WAV files with a sample rate/frequency of 24000 Hz, obtained from converting ADX files to WAV with [PESSFC](https://www.moddingway.com/file/1640.html).
 
 The tool will work as intended on PAK files that clearly belong to the character's costume (has to end with ``Xp.pak`` or ``Xp_dmg.pak``, where ``X`` is the costume number from 1 to 4).
@@ -24,13 +28,15 @@ The greatest example of this is Dragon History. All the lip-syncing there (besid
 
 I worked on some characters' lip-syncing too (mainly the Goku variants), but that quickly stopped once [pxgamer13](https://github.com/pxgamer13) made his take on an automatic lip-syncing tool.
 
+He said the tool was inspired by my hard work, but in reality, he worked on it to later use it for [the Latin-American version of BT4](https://www.youtube.com/watch?v=5ZMnuDMpz3w).
+
 For those who have tried out the tool (either former team members or friends of current ones), there is no doubt about the end results, but rather, what it took to get there.
 
 Originally, the tool would dump out a lot of duplicate keyframes, essentially making the character's mouth open and close in the same frame, which is pointless and takes up space.
 
-I decompiled the tool's source code, given how it is for stuff written in Java, and I was beyond disappointed with the code.
+I decompiled the tool's source code, given how easy it is for stuff written in Java, and I was beyond disappointed with the code.
 
-Nothing wrong with borrowing code from StackOverflow, but please don't make it so blatantly obvious. English and Spanish names throughout the same method gave it away.
+Nothing wrong with borrowing code from StackOverflow, but please don't make it so blatantly obvious. English and Spanish variable names throughout the same method gave it away.
 
 Also, there is literally zero point in using ``java.time.LocalTime`` and ``java.time.temporal.ChronoUnit`` - the LPS file format does not need to be that precise.
 
@@ -56,6 +62,7 @@ This version does not let the user change the threshold. It is set to 45 dB by d
 ![bt-lps-gen-2](https://github.com/user-attachments/assets/e8826733-3d69-4c58-8627-4aa7bcda6fdb)
 
 ## GUI
+### Windows 7
 Not shown in the screenshot, but I changed the threshold to 25 dB. It would have been 45 dB otherwise.
 ![image](https://github.com/user-attachments/assets/b26129d6-a80d-4651-baab-00fd88800598)
 
@@ -72,6 +79,40 @@ Not shown in the screenshot, but I changed the threshold to 25 dB. It would have
 ![image](https://github.com/user-attachments/assets/c54e941a-6d42-488d-b1fb-5607abe97ad4)
 
 ![image](https://github.com/user-attachments/assets/723e7613-3377-437b-8dc1-7ece35a0f615)
+
+### Windows 10
+![image](https://github.com/user-attachments/assets/75526b9b-d086-4b69-9247-1b7f593024e0)
+
+![image](https://github.com/user-attachments/assets/5821c1a5-c370-4a7f-9473-fc4366b9a239)
+
+![image](https://github.com/user-attachments/assets/7f9ef433-1774-4f81-9fcd-65a471741837)
+
+![image](https://github.com/user-attachments/assets/4d119acf-6dc9-4eab-b350-6d495149ae20)
+
+![image](https://github.com/user-attachments/assets/e76e1b77-fd4a-40fe-921e-2fa524e7aba8)
+
+![image](https://github.com/user-attachments/assets/0e2a9b11-45f3-43bb-b0b6-0660a7e6f4b2)
+
+![image](https://github.com/user-attachments/assets/94688bb0-0dad-4d2d-b0ec-7b9ad2d3afb5)
+
+![image](https://github.com/user-attachments/assets/10bcd85c-5ae6-4c16-8863-ea68cf2f6c95)
+
+![image](https://github.com/user-attachments/assets/093625aa-e176-4881-8319-88f1eaceb92d)
+
+![image](https://github.com/user-attachments/assets/59a1a2ae-5070-48b9-a372-2772cdb3ad2e)
+
+![image](https://github.com/user-attachments/assets/e99a82ec-2c66-434c-a6c0-a1b188b4fa87)
+
+### Linux Mint
+![image](https://github.com/user-attachments/assets/ad584c56-d6c0-4825-8def-910b2e65900b)
+
+![image](https://github.com/user-attachments/assets/f78e690b-cf76-45aa-bec6-b36a33a2ef95)
+
+![image](https://github.com/user-attachments/assets/160669d1-7df5-4239-b878-45b0ea9ae727)
+
+![image](https://github.com/user-attachments/assets/78798956-c23c-4dac-a266-5094d3d03146)
+
+![image](https://github.com/user-attachments/assets/3705abaf-8edf-49ae-ac2b-dd89c7f2e8e7)
 
 # Results
 Here is a file comparison of two character costume files that will be used for an upcoming mod...
