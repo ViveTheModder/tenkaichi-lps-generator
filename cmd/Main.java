@@ -1,6 +1,6 @@
 package cmd;
+//Tenkaichi LPS Generator v1.2 by ViveTheModder
 import java.awt.Desktop;
-//Tenkaichi LPS Generator v1.1 by ViveTheModder
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class Main 
 {
-	static boolean isForWii=false;
+	public static boolean hasNoValidWAVs=false, isForWii=false;
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
 	public static int numPakContents, pakTotal=0, threshold=45, wavTotal=0;
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
@@ -27,7 +27,7 @@ public class Main
 		int fileSize = LittleEndian.getInt(pak.readInt());
 		int actualFileSize = (int) pak.length();
 		pak.close();
-		if (fileSize==actualFileSize && numPakContents>=250) return true;
+		if (fileSize==actualFileSize && numPakContents>=250 && numPakContents<=252) return true;
 		return false;
 	}
 	private static byte[] getLpsFileContents(short[] keyframes, int numKeyframes)
@@ -75,9 +75,9 @@ public class Main
 				sampleSum += sample*sample; //sum of squares
 			}
 			double rms = Math.sqrt((double)sampleSum/numBytesPerFrame); //root mean square
-			if (rms==0) startsClosed=true; //0 rms means the volume is -Infinity dB
+			if (i==0 && rms==0) startsClosed=true; //0 rms means the volume is -Infinity dB
 			double db = 20 * Math.log10(rms); //decibels
-			double time = i/24000.0; //current fraction of a secnd
+			double time = i/24000.0; //current fraction of a second
 			short currFrame = (short) Math.round(time*60);
 			//test open & closed ranges by filtering the results (this could also be done with a boolean variable lol)
 			if (db<threshold) mouthCond="Closed";
@@ -125,9 +125,12 @@ public class Main
 				if (openMouthIntervals[i]==1 && remainingKeyframesSize>1) //exclude keyframes with a difference/interval of 1 frame
 				{
 					short[] remainingKeyframes = new short[remainingKeyframesSize];
-					System.arraycopy(keyframes, i+4, remainingKeyframes, 0, remainingKeyframes.length);
-					numKeyframes-=2;
-					System.arraycopy(remainingKeyframes, 0, keyframes, i+displacement+1, remainingKeyframes.length);
+					if (i+4+remainingKeyframesSize<=numKeyframes) //prevent System.arraycopy() from softlocking the program
+					{
+						System.arraycopy(keyframes, i+4, remainingKeyframes, 0, remainingKeyframes.length);
+						numKeyframes-=2;
+						System.arraycopy(remainingKeyframes, 0, keyframes, i+displacement+1, remainingKeyframes.length);
+					}
 				}
 			}
 			byte[] lpsContents = getLpsFileContents(keyframes,numKeyframes);
@@ -138,7 +141,12 @@ public class Main
 				//check delimiter (underscore or hyphen/dash/minus)
 				if (wavName.contains("_")) wavNameArray = wavName.split("_");
 				else if (wavName.contains("-")) wavNameArray = wavName.split("-");
-				else continue;
+				else 
+				{
+					wavTotal--;
+					if (wavTotal==0) hasNoValidWAVs=true;
+					continue;
+				}
 				//check if name ends with US/JP (region) to then get the WAV ID (zero-indexed)
 				if (wavName.endsWith("US") || wavName.endsWith("JP")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-2]);
 				else wavID = Integer.parseInt(wavNameArray[wavNameArray.length-1]);
@@ -160,7 +168,7 @@ public class Main
 						overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
 					}
 				}
-				else 
+				else if (pakName.startsWith("lps") || pakName.contains("lips"))
 				{
 					overwritePakFile(pak, lpsContents, wavID); cnt+=2;
 				}
@@ -230,6 +238,7 @@ public class Main
 		{
 			if (args[0].equals("-w") || args[0].equals("-wii")) isForWii=true;
 			else if (args[0].equals("-p") || args[0].equals("-ps2")) isForWii=false;
+			else System.exit(1);
 			try 
 			{
 				Scanner sc = new Scanner(System.in);
@@ -266,6 +275,13 @@ public class Main
 				
 				long startLPS = System.currentTimeMillis();
 				assignLpsToPak(pakFiles, wavFiles);
+				if (hasNoValidWAVs) 
+				{
+					System.out.println("No valid WAVs were detected. Make sure they follow this naming convention:\n"
+					+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.);\n"
+					+ "YYY -> Number up to 3 digits (which will be used for the audio file ID);\n"
+					+ "ZZ --> Region (either US or JP; this only really matters for the character costume files).");
+				}
 				long endLPS = System.currentTimeMillis();
 				long end = System.currentTimeMillis();
 				System.out.println("\nTotal Execution Time: "+(end-start)/1000.0+" s");
