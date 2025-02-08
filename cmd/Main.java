@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.2 by ViveTheModder
+//Tenkaichi LPS Generator v1.3 by ViveTheModder
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,9 +16,10 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class Main 
 {
-	public static boolean hasNoValidWAVs=false, isForWii=false;
+	public static boolean hasNoValidWAVs=false, wiiMode=false; //Wii Mode is also used for Raging Blast
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
 	public static int numPakContents, pakTotal=0, threshold=45, wavTotal=0;
+	private static final String TITLE = "Tenkaichi LPS Generator v1.3";
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
 	{
 		RandomAccessFile pak = new RandomAccessFile(pakRef,"r");
@@ -39,6 +40,7 @@ public class Main
 		if (fileSize%64!=0) fileSize = (short) (fileSize+64-(fileSize%64));
 		byte[] lps = new byte[fileSize];
 		byte[] LIPS = {0x4C,0x49,0x50,0x53};
+		if (wiiMode) LIPS[3]=0x57; //change S to W if Wii/RB mode is enabled
 		System.arraycopy(LIPS, 0, lps, 0, 4);
 		System.arraycopy(LittleEndian.getByteArrayFromInt(2), 0, lps, 4, 4);
 		System.arraycopy(LittleEndian.getByteArrayFromInt(numKeyframes), 0, lps, 8, 4);
@@ -168,7 +170,7 @@ public class Main
 						overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
 					}
 				}
-				else if (pakName.startsWith("lps") || pakName.contains("lips"))
+				else if (pakName.startsWith("lps") || pakName.endsWith("lps") || pakName.contains("lips"))
 				{
 					overwritePakFile(pak, lpsContents, wavID); cnt+=2;
 				}
@@ -236,9 +238,21 @@ public class Main
 		long start = System.currentTimeMillis();
 		if (args.length>0)
 		{
-			if (args[0].equals("-w") || args[0].equals("-wii")) isForWii=true;
-			else if (args[0].equals("-p") || args[0].equals("-ps2")) isForWii=false;
-			else System.exit(1);
+			if (args[0].equals("-w") || args[0].equals("-wii")) wiiMode=true;
+			else if (args[0].equals("-p") || args[0].equals("-ps2")) wiiMode=false;
+			else if (args[0].equals("-h") || args[0].equals("-help"))
+			{
+				System.out.println(TITLE+"\nAutomatically generate Lip-Syncing files and assign them to PAK files (for characters or menus).\n"
+				+ "Here is a list of the only arguments that can be used. Use -h or -help to print this out again.\n\n"
+				+ "* -w (or -wii)\nEnable support for PAK files that use the Big Endian byte order (from Wii BT2/BT3 or PS3 RB1/RB2).\n"
+				+ "* -p (or -ps2)\nEnable support for PAK files that use the Little Endian byte order (from PS2 BT2/BT3).\n");
+				System.exit(0);
+			}
+			else 
+			{
+				System.out.println("Invalid argument. Use -h for a valid list of arguments.");
+				System.exit(1);
+			}
 			try 
 			{
 				Scanner sc = new Scanner(System.in);

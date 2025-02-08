@@ -1,5 +1,5 @@
 package gui;
-//Tenkaichi LPS Generator v1.2 by ViveTheModder
+//Tenkaichi LPS Generator v1.3 by ViveTheModder
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -52,7 +52,7 @@ public class App
 	private static final String HTML_DIV_START = "<html><div style='font-weight: bold; font-size: 12px;'>";
 	private static final String HTML_DIV_CENTER = "<html><div style='text-align: center;'>";
 	private static final String HTML_DIV_END = "</div></html>";
-	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.2";
+	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.3";
 	private static final String[] FILE_TYPES = {"PAK","WAV"};
 	private static File[] pakFiles, wavFiles;
 	public static JProgressBar bar;
@@ -99,7 +99,7 @@ public class App
 		Image img = ICON.getScaledInstance(90, 90, Image.SCALE_SMOOTH);
 		ImageIcon imgIcon = new ImageIcon(img);
 		JButton btn = new JButton("Apply Automatic Lip-Sync");
-		JCheckBox wiiCheck = new JCheckBox(HTML_DIV_START+"Wii Mode"+HTML_DIV_END);
+		JCheckBox wiiCheck = new JCheckBox(HTML_DIV_START+"Wii/PS3 Mode"+HTML_DIV_END);
 		JFrame frame = new JFrame(WINDOW_TITLE);
 		JLabel iconLabel = new JLabel(" ");
 		JLabel thresholdLabel = new JLabel(HTML_DIV_START+"Threshold (dB):"+HTML_DIV_END);
@@ -128,8 +128,9 @@ public class App
 		+ "<br>Otherwise, for games of the Budokai, Tenkaichi or Raging Blast series,"
 		+ "<br>it is recommended to leave the threshold as is."+HTML_DIV_END);
 		titleLabel.setFont(BOLD);
-		wiiCheck.setToolTipText(HTML_DIV_CENTER+"This option is meant for files whose integers are in Big Endian, "
-		+ "not Little Endian<br>(which is the default byte order for the PS2 version of Budokai Tenkaichi 3)."+HTML_DIV_END);
+		wiiCheck.setToolTipText(HTML_DIV_CENTER+"This option is meant for files from the Wii version of Budokai Tenkaichi 2 & 3, and"
+		+ "<br>the PS3 version of Raging Blast 1 & 2, whose integers are in Big Endian, not Little Endian<br>"
+		+ "(which is the default byte order for the PS2 version of Budokai Tenkaichi 3)."+HTML_DIV_END);
 		wiiCheck.setHorizontalAlignment(SwingConstants.CENTER);
 
 		for (int i=0; i<2; i++)
@@ -221,7 +222,7 @@ public class App
 					String thresholdText = thresholdField.getText();
 					if (!thresholdText.equals("")) cmd.Main.threshold = Integer.parseInt(thresholdField.getText());
 					frame.setVisible(false); frame.dispose();
-					if (wiiCheck.isSelected()) cmd.Main.isForWii=true;
+					if (wiiCheck.isSelected()) cmd.Main.wiiMode=true;
 					setProgress();
 				}
 			}
