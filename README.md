@@ -62,6 +62,29 @@ This version does not let the user change the threshold. It is set to 45 dB by d
 ![bt-lps-gen-2](https://github.com/user-attachments/assets/e8826733-3d69-4c58-8627-4aa7bcda6fdb)
 
 ## GUI
+### Windows XP
+![image](https://github.com/user-attachments/assets/66c1d483-efd6-464c-810b-c1afac31724a)
+
+![image](https://github.com/user-attachments/assets/84ecbb8e-37ef-4aab-82ff-d4545e2d8b75)
+
+![image](https://github.com/user-attachments/assets/4ad8ed17-cf2d-4bf5-b423-1e8533fb32e0)
+
+![image](https://github.com/user-attachments/assets/9302b92e-75b9-4f29-b038-800b84d62105)
+
+![image](https://github.com/user-attachments/assets/bb21bd42-3143-46e9-8b2a-41831b932654)
+
+![image](https://github.com/user-attachments/assets/f33c88df-eb8b-4bf2-9891-0addb02db540)
+
+![image](https://github.com/user-attachments/assets/e31c67a9-d517-44e4-ad9b-c08669eb68a0)
+
+![image](https://github.com/user-attachments/assets/bff1a119-9950-4038-b5d6-ee534fc2fc17)
+
+![image](https://github.com/user-attachments/assets/ab756c68-4aa7-46fe-97c7-d9d0cf118b14)
+
+![image](https://github.com/user-attachments/assets/25854cc4-2209-4007-ace9-dd67a7a266a2)
+
+![image](https://github.com/user-attachments/assets/9dc3434c-9543-4882-b3f3-3ead24f89c1e)
+
 ### Windows 7
 Not shown in the screenshot, but I changed the threshold to 25 dB. It would have been 45 dB otherwise.
 ![image](https://github.com/user-attachments/assets/b26129d6-a80d-4651-baab-00fd88800598)
