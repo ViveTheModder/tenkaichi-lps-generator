@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.3 by ViveTheModder
+//Tenkaichi LPS Generator v1.3.1 by ViveTheModder
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -19,7 +19,7 @@ public class Main
 	public static boolean hasNoValidWAVs=false, wiiMode=false; //Wii Mode is also used for Raging Blast
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
 	public static int numPakContents, pakTotal=0, threshold=45, wavTotal=0;
-	private static final String TITLE = "Tenkaichi LPS Generator v1.3";
+	private static final String TITLE = "Tenkaichi LPS Generator v1.3.1";
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
 	{
 		RandomAccessFile pak = new RandomAccessFile(pakRef,"r");
@@ -158,6 +158,7 @@ public class Main
 					String charaNameFromPak=null;
 					if (pakName.endsWith("p.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-7);
 					else if (pakName.endsWith("p_dmg.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-11);
+					else continue; //prevent assist objects (costumes without parameters) from being detected
 					String charaNameFromWav = wavName.substring(0, wavName.length()-7).toLowerCase();
 					int newWavID=wavID;
 					if (wavNameArray[wavNameArray.length-1].endsWith("US")) newWavID=152+(wavID%500);

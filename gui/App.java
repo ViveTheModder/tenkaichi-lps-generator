@@ -1,5 +1,5 @@
 package gui;
-//Tenkaichi LPS Generator v1.3 by ViveTheModder
+//Tenkaichi LPS Generator v1.3.1 by ViveTheModder
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -44,15 +44,16 @@ import cmd.Main;
 
 public class App 
 {
+	private static final Toolkit DEF_TOOLKIT = Toolkit.getDefaultToolkit();
 	private static final Font BOLD = new Font("Tahoma", 1, 24);
 	private static final Font BOLD_S = new Font("Tahoma", 1, 12);
-	private static final Image ICON = Toolkit.getDefaultToolkit().getImage(ClassLoader.getSystemResource("img/icon.png"));
+	private static final Image ICON = DEF_TOOLKIT.getImage(ClassLoader.getSystemResource("img/icon.png"));
 	private static final String HTML_A_START = "<html><a href=''>";
 	private static final String HTML_A_END = "</a></html>";
 	private static final String HTML_DIV_START = "<html><div style='font-weight: bold; font-size: 12px;'>";
 	private static final String HTML_DIV_CENTER = "<html><div style='text-align: center;'>";
 	private static final String HTML_DIV_END = "</div></html>";
-	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.3";
+	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.3.1";
 	private static final String[] FILE_TYPES = {"PAK","WAV"};
 	private static File[] pakFiles, wavFiles;
 	public static JProgressBar bar;
@@ -83,7 +84,11 @@ public class App
 				{
 					folder = tempFolderRef; break;
 				}
-				else JOptionPane.showMessageDialog(chooser, "This folder does NOT have "+FILE_TYPES[index]+" files! Try again!", WINDOW_TITLE, 0);
+				else 
+				{
+					DEF_TOOLKIT.beep();
+					JOptionPane.showMessageDialog(chooser, "This folder does NOT have "+FILE_TYPES[index]+" files! Try again!", WINDOW_TITLE, 0);
+				}
 			}
 			else return folder;
 		}
@@ -216,7 +221,11 @@ public class App
 				String errorMsg="";
 				if (pakFiles==null || pakFiles.length==0) errorMsg+="No directory for "+FILE_TYPES[0]+" has been selected!\n";
 				if (wavFiles==null || wavFiles.length==0) errorMsg+="No directory for "+FILE_TYPES[1]+" has been selected!\n";
-				if (!errorMsg.equals("")) JOptionPane.showMessageDialog(null, errorMsg, WINDOW_TITLE, 0);
+				if (!errorMsg.equals("")) 
+				{
+					DEF_TOOLKIT.beep();
+					JOptionPane.showMessageDialog(null, errorMsg, WINDOW_TITLE, 0);
+				}
 				else
 				{
 					String thresholdText = thresholdField.getText();
@@ -309,6 +318,7 @@ public class App
 					+ "ZZ --> Region (either US or JP; this only really matters for the character costume files).";
 					msgType=0;
 				}
+				DEF_TOOLKIT.beep();
 				JOptionPane.showMessageDialog(null, msg, WINDOW_TITLE, msgType);
 				return null;
 			}
