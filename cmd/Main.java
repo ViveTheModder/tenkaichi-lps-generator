@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.3.1 by ViveTheModder
+//Tenkaichi LPS Generator v1.4 by ViveTheModder
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,7 +16,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class Main 
 {
-	public static boolean hasNoValidWAVs=false, wiiMode=false; //Wii Mode is also used for Raging Blast
+	public static boolean hasNoValidWAVs=false, disableFilter=false, wiiMode=false; //Wii Mode is also used for Raging Blast
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
 	public static int numPakContents, pakTotal=0, threshold=45, wavTotal=0;
 	private static final String TITLE = "Tenkaichi LPS Generator v1.3.1";
@@ -119,19 +119,22 @@ public class Main
 					openMouthIntervals[intervalIndex] = (short) (keyframes[i+1+displacement]-keyframes[i+displacement]);
 				intervalIndex++;
 			}
-			//filter keyframes based on open mouth intervals
 			int numKeyframes = keyframes.length;
-			for (int i=0; i<openMouthIntervals.length; i++)
+			//filter keyframes based on open mouth intervals
+			if (!disableFilter)
 			{
-				int remainingKeyframesSize = numKeyframes-(i+displacement+3);
-				if (openMouthIntervals[i]==1 && remainingKeyframesSize>1) //exclude keyframes with a difference/interval of 1 frame
+				for (int i=0; i<openMouthIntervals.length; i++)
 				{
-					short[] remainingKeyframes = new short[remainingKeyframesSize];
-					if (i+4+remainingKeyframesSize<=numKeyframes) //prevent System.arraycopy() from softlocking the program
+					int remainingKeyframesSize = numKeyframes-(i+displacement+3);
+					if (openMouthIntervals[i]==1 && remainingKeyframesSize>1) //exclude keyframes with a difference/interval of 1 frame
 					{
-						System.arraycopy(keyframes, i+4, remainingKeyframes, 0, remainingKeyframes.length);
-						numKeyframes-=2;
-						System.arraycopy(remainingKeyframes, 0, keyframes, i+displacement+1, remainingKeyframes.length);
+						short[] remainingKeyframes = new short[remainingKeyframesSize];
+						if (i+4+remainingKeyframesSize<=numKeyframes) //prevent System.arraycopy() from softlocking the program
+						{
+							System.arraycopy(keyframes, i+4, remainingKeyframes, 0, remainingKeyframes.length);
+							numKeyframes-=2;
+							System.arraycopy(remainingKeyframes, 0, keyframes, i+displacement+1, remainingKeyframes.length);
+						}
 					}
 				}
 			}
@@ -236,26 +239,41 @@ public class Main
 	}
 	public static void main(String[] args) 
 	{
+		String helpMsg = TITLE+"\nAutomatically generate Lip-Syncing files and assign them to PAK files (for characters or menus).\n"
+		+ "Here is a list of the only arguments that can be used. Use -h or -help to print this out again.\n\n"
+		+ "* -w (or -wii)\nEnable support for PAK files that use the Big Endian byte order (from Wii BT2/BT3 or PS3 RB1/RB2).\n"
+		+ "* -p (or -ps2)\nEnable support for PAK files that use the Little Endian byte order (from PS2 BT2/BT3).\n"
+		+ "* -d (must be passed as 2nd arg)\nDisable keyframe filtering (to prevent rare softlocks).\n";
 		long start = System.currentTimeMillis();
 		if (args.length>0)
 		{
-			if (args[0].equals("-w") || args[0].equals("-wii")) wiiMode=true;
-			else if (args[0].equals("-p") || args[0].equals("-ps2")) wiiMode=false;
-			else if (args[0].equals("-h") || args[0].equals("-help"))
+			for (String arg: args)
 			{
-				System.out.println(TITLE+"\nAutomatically generate Lip-Syncing files and assign them to PAK files (for characters or menus).\n"
-				+ "Here is a list of the only arguments that can be used. Use -h or -help to print this out again.\n\n"
-				+ "* -w (or -wii)\nEnable support for PAK files that use the Big Endian byte order (from Wii BT2/BT3 or PS3 RB1/RB2).\n"
-				+ "* -p (or -ps2)\nEnable support for PAK files that use the Little Endian byte order (from PS2 BT2/BT3).\n");
-				System.exit(0);
-			}
-			else 
-			{
-				System.out.println("Invalid argument. Use -h for a valid list of arguments.");
-				System.exit(1);
+				if (arg.equals("-w") || arg.equals("-wii")) wiiMode=true;
+				else if (arg.equals("-p") || arg.equals("-ps2")) wiiMode=false;
+				else if (arg.equals("-d"))
+				{
+					disableFilter=true;
+					if (args[0].equals(arg))
+					{
+						gui.App.main(null);
+						return;
+					}
+				}
+				else if (arg.equals("-h") || arg.equals("-help"))
+				{
+					System.out.println(helpMsg);
+					System.exit(0);
+				}
+				else 
+				{
+					System.out.println("Invalid argument. Use -h for a valid list of arguments.");
+					System.exit(1);
+				}
 			}
 			try 
 			{
+				threshold=-1;
 				Scanner sc = new Scanner(System.in);
 				String input;
 				File[] pakFiles, wavFiles;
@@ -285,6 +303,13 @@ public class Main
 						if (wavFiles.length==0) System.out.println("Directory does NOT contain WAV files. Try again!\n");
 						else break;
 					}
+				}
+				while (threshold==-1)
+				{
+					System.out.print("Enter a dB threshold from 0 to 99: ");
+					input = sc.nextLine();
+					if (input.matches("\\d+") && input.length()<=2) threshold = Integer.parseInt(input);
+					else System.out.println("Invalid dB threshold. Try again!");
 				}
 				sc.close();
 				
