@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.4 by ViveTheModder
+//Tenkaichi LPS Generator v1.5 by ViveTheModder
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -18,7 +18,7 @@ public class Main
 {
 	public static boolean hasNoValidWAVs=false, disableFilter=false, wiiMode=false; //Wii Mode is also used for Raging Blast
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
-	public static int numPakContents, pakTotal=0, threshold=45, wavTotal=0;
+	public static int numPakContents, pakTotal=0, threshold=45, validPaks=0, wavTotal=0;
 	private static final String TITLE = "Tenkaichi LPS Generator v1.3.1";
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
 	{
@@ -106,7 +106,7 @@ public class Main
 		if (gui.App.bar!=null) gui.App.bar.setMaximum(pakTotal*wavTotal);
 		for (File wav: wavFiles)
 		{
-			String wavName = wav.getName().replace(".wav", "");
+			String wavName = wav.getName().toLowerCase().replace(".wav", "");
 			String[] wavNameArray = wavName.split("_");
 			short[] keyframes = getLpsKeyframes(wav);
 			short[] openMouthIntervals = new short[(keyframes.length-1)/2];
@@ -153,19 +153,20 @@ public class Main
 					continue;
 				}
 				//check if name ends with US/JP (region) to then get the WAV ID (zero-indexed)
-				if (wavName.endsWith("US") || wavName.endsWith("JP")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-2]);
+				if (wavName.endsWith("us") || wavName.endsWith("jp")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-2]);
 				else wavID = Integer.parseInt(wavNameArray[wavNameArray.length-1]);
 				//check if current PAK file is a costume file, then change the WAV ID based on the WAV's language
 				if (isCharaCostumePak(pak))
 				{
+					validPaks++;
 					String charaNameFromPak=null;
 					if (pakName.endsWith("p.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-7);
 					else if (pakName.endsWith("p_dmg.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-11);
 					else continue; //prevent assist objects (costumes without parameters) from being detected
 					String charaNameFromWav = wavName.substring(0, wavName.length()-7).toLowerCase();
 					int newWavID=wavID;
-					if (wavNameArray[wavNameArray.length-1].endsWith("US")) newWavID=152+(wavID%500);
-					else if (wavNameArray[wavNameArray.length-1].endsWith("JP")) newWavID=52+(wavID%500);
+					if (wavNameArray[wavNameArray.length-1].endsWith("us")) newWavID=152+(wavID%500);
+					else if (wavNameArray[wavNameArray.length-1].endsWith("jp")) newWavID=52+(wavID%500);
 					if (numPakContents==250) newWavID-=4; //this only applies to Budokai Tenkaichi 2's character costumes
 					//only overwrite current character costume PAK if the character name matches with the one from the WAV
 					if (charaNameFromPak.equals(charaNameFromWav)) 
@@ -176,7 +177,19 @@ public class Main
 				}
 				else if (pakName.startsWith("lps") || pakName.endsWith("lps") || pakName.contains("lips"))
 				{
-					overwritePakFile(pak, lpsContents, wavID); cnt+=2;
+					validPaks++;
+					if (wavNameArray[0].equals("vic")) //check if WAV is from story mode (VIC -> Voice In Cutscene?)
+					{
+						String[] pakNameArray = pakName.split("-");
+						int pakID = Integer.parseInt(pakNameArray[pakNameArray.length-1].replace(".pak", ""));
+						int gscID = Integer.parseInt(wavNameArray[1]);
+						String langFromPak = pakNameArray[1];
+						if (langFromPak.equals(wavNameArray[wavNameArray.length-1]) && pakID==gscID)
+						{
+							System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
+							overwritePakFile(pak, lpsContents, wavID); cnt+=2;
+						}
+					}
 				}
 				//increment progress bar percentage
 				if (gui.App.bar!=null) gui.App.bar.setValue(cnt);
@@ -315,13 +328,23 @@ public class Main
 				
 				long startLPS = System.currentTimeMillis();
 				assignLpsToPak(pakFiles, wavFiles);
+				String msg="";
 				if (hasNoValidWAVs) 
 				{
-					System.out.println("No valid WAVs were detected. Make sure they follow this naming convention:\n"
+					msg += "No valid WAVs were detected. Make sure they follow this naming convention:\n"
 					+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.);\n"
 					+ "YYY -> Number up to 3 digits (which will be used for the audio file ID);\n"
-					+ "ZZ --> Region (either US or JP; this only really matters for the character costume files).");
+					+ "ZZ --> Region (either US or JP, which matters for character costumes or LPS PAKs from Dragon History).\n";
 				}
+				if (validPaks==0)
+				{
+					msg += "No valid PAKs were detected. Make sure they are either:\n"
+					+ "a) Character Costume Files (that must end with"+'"'+"Xp.pak"+'"'+" or "+'"'+"Xp_dmg.pak"+'"'+", where X represents the costume number);\n"
+					+ "b) Dragon History LPS PAKs, which uses the following name convention:\nLPS-XX-B-YY.pak\n"
+					+ "* XX -> Region (either US or JP);\n* YY -> Number up to 2 digits (which is the scenario ID).\n"
+					+ "c) Literally any other PAK that starts/ends with LPS, or contains LIPS somewhere in its name.\n";
+				}
+				System.out.println(msg);
 				long endLPS = System.currentTimeMillis();
 				long end = System.currentTimeMillis();
 				System.out.println("\nTotal Execution Time: "+(end-start)/1000.0+" s");

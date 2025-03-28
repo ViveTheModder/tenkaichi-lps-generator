@@ -1,5 +1,5 @@
 package gui;
-//Tenkaichi LPS Generator v1.3.1 by ViveTheModder
+//Tenkaichi LPS Generator v1.5 by ViveTheModder
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -53,7 +53,7 @@ public class App
 	private static final String HTML_DIV_START = "<html><div style='font-weight: bold; font-size: 12px;'>";
 	private static final String HTML_DIV_CENTER = "<html><div style='text-align: center;'>";
 	private static final String HTML_DIV_END = "</div></html>";
-	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.3.1";
+	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.5";
 	private static final String[] FILE_TYPES = {"PAK","WAV"};
 	private static File[] pakFiles, wavFiles;
 	public static JProgressBar bar;
@@ -86,13 +86,18 @@ public class App
 				}
 				else 
 				{
-					DEF_TOOLKIT.beep();
+					errorBeep();
 					JOptionPane.showMessageDialog(chooser, "This folder does NOT have "+FILE_TYPES[index]+" files! Try again!", WINDOW_TITLE, 0);
 				}
 			}
 			else return folder;
 		}
 		return folder;
+	}
+	private static void errorBeep()
+	{
+		Runnable runWinErrorSnd = (Runnable) DEF_TOOLKIT.getDesktopProperty("win.sound.exclamation");
+		if (runWinErrorSnd!=null) runWinErrorSnd.run();
 	}
 	private static void setApplication()
 	{
@@ -223,7 +228,7 @@ public class App
 				if (wavFiles==null || wavFiles.length==0) errorMsg+="No directory for "+FILE_TYPES[1]+" has been selected!\n";
 				if (!errorMsg.equals("")) 
 				{
-					DEF_TOOLKIT.beep();
+					errorBeep();
 					JOptionPane.showMessageDialog(null, errorMsg, WINDOW_TITLE, 0);
 				}
 				else
@@ -308,17 +313,28 @@ public class App
 				double time = (end-start)/1000.0;
 				progress.setVisible(false); 
 				progress.dispose();
-				String msg = "Automatic Lip-Syncing of "+Main.wavTotal+" WAV files applied to "+Main.pakTotal+" PAK files in "+time+" s!";
+				String msg="";
 				int msgType=1;
 				if (cmd.Main.hasNoValidWAVs) 
 				{
-					msg = "No valid WAVs were detected. Make sure they follow this naming convention:\n"
+					msg += "No valid WAVs were detected. Make sure they follow this naming convention:\n"
 					+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.);\n"
 					+ "YYY -> Number up to 3 digits (which will be used for the audio file ID);\n"
-					+ "ZZ --> Region (either US or JP; this only really matters for the character costume files).";
+					+ "ZZ --> Region (either US or JP, which matters for character costumes or LPS PAKs from Dragon History).\n";
 					msgType=0;
 				}
-				DEF_TOOLKIT.beep();
+				if (cmd.Main.validPaks==0)
+				{
+					msg += "No valid PAKs were detected. Make sure they are either:\n"
+					+ "a) Character Costume Files (that must end with"+'"'+"Xp.pak"+'"'+" or "+'"'+"Xp_dmg.pak"+'"'+", where X represents the costume number);\n"
+					+ "b) Dragon History LPS PAKs, which uses the following name convention:\nLPS-XX-B-YY.pak\n"
+					+ "* XX -> Region (either US or JP);\n* YY -> Number up to 2 digits (which is the scenario ID).\n"
+					+ "c) Literally any other PAK that starts/ends with LPS, or contains LIPS somewhere in its name.\n";
+					msgType=0;
+				}
+				if (msg.equals("")) msg="Automatic Lip-Syncing of "+Main.wavTotal+" WAV files applied to "+Main.pakTotal+" PAK files in "+time+" s!";
+				if (msgType==1) DEF_TOOLKIT.beep();
+				else errorBeep();
 				JOptionPane.showMessageDialog(null, msg, WINDOW_TITLE, msgType);
 				return null;
 			}
