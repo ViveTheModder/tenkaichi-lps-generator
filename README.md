@@ -3,7 +3,7 @@ A modding tool (supporting both CLI and GUI) for DBZ Budokai Tenkaichi 2 &amp; 3
 
 To run it from the terminal (or Command Prompt), type in the following command: ``java -jar bt-lps-gen.jar -ps2``.
 
-Other arguments can be used, such as ``-p`` (short for PS2), ``-wii`` (to enable Big Endian support) and ``-w`` (short for Wii).
+Other arguments can be used, such as ``-d`` (to disable keyframe filtering, which will result in bigger LPS files but prevents rare softlocks), ``-p`` (short for PS2), ``-wii`` (to enable Big Endian support) and ``-w`` (short for Wii).
 
 Recommended to be used on WAV files with a sample rate/frequency of 24000 Hz, obtained from converting ADX files to WAV with [PESSFC](https://www.moddingway.com/file/1640.html).
 
