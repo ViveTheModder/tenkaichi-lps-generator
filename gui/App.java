@@ -1,5 +1,5 @@
 package gui;
-//Tenkaichi LPS Generator v1.5 by ViveTheModder
+//Tenkaichi LPS Generator v1.6 by ViveTheModder
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -53,7 +53,7 @@ public class App
 	private static final String HTML_DIV_START = "<html><div style='font-weight: bold; font-size: 12px;'>";
 	private static final String HTML_DIV_CENTER = "<html><div style='text-align: center;'>";
 	private static final String HTML_DIV_END = "</div></html>";
-	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.5";
+	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.6";
 	private static final String[] FILE_TYPES = {"PAK","WAV"};
 	private static File[] pakFiles, wavFiles;
 	public static JProgressBar bar;
@@ -332,7 +332,7 @@ public class App
 					+ "c) Literally any other PAK that starts/ends with LPS, or contains LIPS somewhere in its name.\n";
 					msgType=0;
 				}
-				if (msg.equals("")) msg="Automatic Lip-Syncing of "+Main.wavTotal+" WAV files applied to "+Main.pakTotal+" PAK files in "+time+" s!";
+				if (msg.equals("")) msg="Automatic Lip-Syncing of "+Main.wavTotal+" WAV files applied to "+Main.validPaks+" PAK files in "+time+" s!";
 				if (msgType==1) DEF_TOOLKIT.beep();
 				else errorBeep();
 				JOptionPane.showMessageDialog(null, msg, WINDOW_TITLE, msgType);

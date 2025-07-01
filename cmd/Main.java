@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.5 by ViveTheModder
+//Tenkaichi LPS Generator v1.6 by ViveTheModder
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -19,7 +19,7 @@ public class Main
 	public static boolean hasNoValidWAVs=false, disableFilter=false, wiiMode=false; //Wii Mode is also used for Raging Blast
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
 	public static int numPakContents, pakTotal=0, threshold=45, validPaks=0, wavTotal=0;
-	private static final String TITLE = "Tenkaichi LPS Generator v1.3.1";
+	private static final String TITLE = "Tenkaichi LPS Generator v1.6";
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
 	{
 		RandomAccessFile pak = new RandomAccessFile(pakRef,"r");
@@ -141,7 +141,7 @@ public class Main
 			byte[] lpsContents = getLpsFileContents(keyframes,numKeyframes);
 			for (File pak: pakFiles)
 			{
-				int wavID;
+				int wavID=-1;
 				String pakName = pak.getName().toLowerCase();
 				//check delimiter (underscore or hyphen/dash/minus)
 				if (wavName.contains("_")) wavNameArray = wavName.split("_");
@@ -154,7 +154,8 @@ public class Main
 				}
 				//check if name ends with US/JP (region) to then get the WAV ID (zero-indexed)
 				if (wavName.endsWith("us") || wavName.endsWith("jp")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-2]);
-				else wavID = Integer.parseInt(wavNameArray[wavNameArray.length-1]);
+				else if (wavName.matches("[A-Za-z0-9]+")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length-1]);
+				else continue; //skip WAV files containing special characters or no WAV IDs (numbers) at all
 				//check if current PAK file is a costume file, then change the WAV ID based on the WAV's language
 				if (isCharaCostumePak(pak))
 				{
@@ -175,7 +176,7 @@ public class Main
 						overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
 					}
 				}
-				else if (pakName.startsWith("lps") || pakName.endsWith("lps") || pakName.contains("lips"))
+				else if (pakName.contains("lps") || pakName.contains("lips"))
 				{
 					validPaks++;
 					if (wavNameArray[0].equals("vic")) //check if WAV is from story mode (VIC -> Voice In Cutscene?)
@@ -332,7 +333,7 @@ public class Main
 				if (hasNoValidWAVs) 
 				{
 					msg += "No valid WAVs were detected. Make sure they follow this naming convention:\n"
-					+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.);\n"
+					+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.) WITHOUT special characters;\n"
 					+ "YYY -> Number up to 3 digits (which will be used for the audio file ID);\n"
 					+ "ZZ --> Region (either US or JP, which matters for character costumes or LPS PAKs from Dragon History).\n";
 				}
@@ -342,7 +343,7 @@ public class Main
 					+ "a) Character Costume Files (that must end with"+'"'+"Xp.pak"+'"'+" or "+'"'+"Xp_dmg.pak"+'"'+", where X represents the costume number);\n"
 					+ "b) Dragon History LPS PAKs, which uses the following name convention:\nLPS-XX-B-YY.pak\n"
 					+ "* XX -> Region (either US or JP);\n* YY -> Number up to 2 digits (which is the scenario ID).\n"
-					+ "c) Literally any other PAK that starts/ends with LPS, or contains LIPS somewhere in its name.\n";
+					+ "c) Literally any other PAK that contains LPS or LIPS somewhere in its name.\n";
 				}
 				System.out.println(msg);
 				long endLPS = System.currentTimeMillis();
