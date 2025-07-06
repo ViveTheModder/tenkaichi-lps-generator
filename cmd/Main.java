@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.6 by ViveTheModder
+//Tenkaichi LPS Generator v1.7 by ViveTheModder
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -18,8 +18,8 @@ public class Main
 {
 	public static boolean hasNoValidWAVs=false, disableFilter=false, wiiMode=false; //Wii Mode is also used for Raging Blast
 	static boolean startsClosed=false; //condition of 1st keyframe (closed/true or open/false)
-	public static int numPakContents, pakTotal=0, threshold=45, validPaks=0, wavTotal=0;
-	private static final String TITLE = "Tenkaichi LPS Generator v1.6";
+	public static int numPakContents, pakTotal=0, progBarMax=0, threshold=45, validPaks=0, validWavs=0, wavTotal=0;
+	private static final String TITLE = "Tenkaichi LPS Generator v1.7";
 	private static boolean isCharaCostumePak(File pakRef) throws IOException
 	{
 		RandomAccessFile pak = new RandomAccessFile(pakRef,"r");
@@ -103,7 +103,8 @@ public class Main
 	{
 		int cnt=0;
 		pakTotal = pakFiles.length; wavTotal = wavFiles.length;
-		if (gui.App.bar!=null) gui.App.bar.setMaximum(pakTotal*wavTotal);
+		progBarMax = pakTotal*wavTotal;
+		if (gui.App.bar!=null) gui.App.bar.setMaximum(progBarMax);
 		for (File wav: wavFiles)
 		{
 			String wavName = wav.getName().toLowerCase().replace(".wav", "");
@@ -159,7 +160,7 @@ public class Main
 				//check if current PAK file is a costume file, then change the WAV ID based on the WAV's language
 				if (isCharaCostumePak(pak))
 				{
-					validPaks++;
+					if (validPaks<pakTotal) validPaks++;
 					String charaNameFromPak=null;
 					if (pakName.endsWith("p.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-7);
 					else if (pakName.endsWith("p_dmg.pak")) charaNameFromPak = pakName.substring(0, pakName.length()-11);
@@ -172,25 +173,61 @@ public class Main
 					//only overwrite current character costume PAK if the character name matches with the one from the WAV
 					if (charaNameFromPak.equals(charaNameFromWav)) 
 					{
+						validWavs++;
+						gui.App.bar.setMaximum(progBarMax-=2);
 						System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
 						overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
 					}
 				}
-				else if (pakName.contains("lps") || pakName.contains("lips"))
+				else if (pakName.contains("lps"))
 				{
-					validPaks++;
-					if (wavNameArray[0].equals("vic")) //check if WAV is from story mode (VIC -> Voice In Cutscene?)
+					//all blame & praise goes to MetalFrieza3000
+					if (pakName.startsWith("bt4"))
 					{
+						if (validPaks<pakTotal) validPaks++;
+						String charaNameFromPak = pakName.substring(0,pakName.length()-11).replace("bt4_", "");
+						String charaNameFromWav = wavName.substring(0,wavName.length()-7).toLowerCase();
+						String[] pakNameArray = pakName.split("_");
+						String langFromPak = pakNameArray[pakNameArray.length-1].replace(".pak", "");
+						String langFromWav = wavNameArray[wavNameArray.length-1];
+						
+						int newWavID = wavID%500;
+						if (charaNameFromPak.equals(charaNameFromWav) && langFromPak.equals(langFromWav)) 
+						{
+							validWavs++;
+							gui.App.bar.setMaximum(progBarMax-=2);
+							System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
+							overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
+						}
+					}
+					else if (wavNameArray[0].equals("vic")) //check if WAV is from story mode (VIC -> Voice In Cutscene?)
+					{
+						if (validPaks<pakTotal) validPaks++;
 						String[] pakNameArray = pakName.split("-");
 						int pakID = Integer.parseInt(pakNameArray[pakNameArray.length-1].replace(".pak", ""));
 						int gscID = Integer.parseInt(wavNameArray[1]);
 						String langFromPak = pakNameArray[1];
 						if (langFromPak.equals(wavNameArray[wavNameArray.length-1]) && pakID==gscID)
 						{
+							validWavs++;
+							gui.App.bar.setMaximum(progBarMax-=2);
 							System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
 							overwritePakFile(pak, lpsContents, wavID); cnt+=2;
 						}
 					}
+				}
+				else if (pakName.endsWith("lips.pak"))
+				{
+					if (validPaks<pakTotal) validPaks++;
+					String langFromWav = wavNameArray[wavNameArray.length-1];
+					int newWavID=wavID;
+					if (langFromWav.endsWith("us")) newWavID=2*wavID+1;
+					else if (langFromWav.endsWith("jp")) newWavID=2*wavID;
+					
+					validWavs++;
+					gui.App.bar.setMaximum(progBarMax-=2);
+					System.out.println("Assigning generated LPS (from "+wavName.toUpperCase()+".WAV) to "+pakName.toUpperCase()+"...");
+					overwritePakFile(pak, lpsContents, newWavID); cnt+=2;
 				}
 				//increment progress bar percentage
 				if (gui.App.bar!=null) gui.App.bar.setValue(cnt);
@@ -335,15 +372,17 @@ public class Main
 					msg += "No valid WAVs were detected. Make sure they follow this naming convention:\n"
 					+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.) WITHOUT special characters;\n"
 					+ "YYY -> Number up to 3 digits (which will be used for the audio file ID);\n"
-					+ "ZZ --> Region (either US or JP, which matters for character costumes or LPS PAKs from Dragon History).\n";
+					+ "ZZ --> Region (either US or JP, which matters for character costumes or LPS PAKs from Dragon History).\n\n"
+					+ "NOTE: The hyphens can also be replaced with underscores.\n";
 				}
 				if (validPaks==0)
 				{
 					msg += "No valid PAKs were detected. Make sure they are either:\n"
 					+ "a) Character Costume Files (that must end with"+'"'+"Xp.pak"+'"'+" or "+'"'+"Xp_dmg.pak"+'"'+", where X represents the costume number);\n"
-					+ "b) Dragon History LPS PAKs, which uses the following name convention:\nLPS-XX-B-YY.pak\n"
+					+ "b) Dragon History LPS PAKs, which use the following name convention:\nLPS-XX-B-YY.pak\n"
 					+ "* XX -> Region (either US or JP);\n* YY -> Number up to 2 digits (which is the scenario ID).\n"
-					+ "c) Literally any other PAK that contains LPS or LIPS somewhere in its name.\n";
+					+ "c) Non-character PAKs whose file names start with BT4.\n"
+					+ "d) Literally any other PAK that contains LPS somewhere in its name, or ends with LIPS.\n";
 				}
 				System.out.println(msg);
 				long endLPS = System.currentTimeMillis();
