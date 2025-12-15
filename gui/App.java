@@ -1,5 +1,5 @@
 package gui;
-//Tenkaichi LPS Generator v1.8 by ViveTheJoestar
+//Tenkaichi LPS Generator v1.9 by ViveTheJoestar
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -37,7 +37,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 import cmd.Main;
 
@@ -51,7 +50,6 @@ public class App {
 	private static final String HTML_DIV_START = "<html><div style='font-weight: bold; font-size: 12px;'>";
 	private static final String HTML_DIV_CENTER = "<html><div style='text-align: center;'>";
 	private static final String HTML_DIV_END = "</div></html>";
-	private static final String WINDOW_TITLE = "Tenkaichi LPS Generator v1.8";
 	private static final String[] FILE_TYPES = { "PAK", "WAV", "LPS" };
 	private static File lastFolder;
 	private static File[] pakFiles, wavFiles;
@@ -71,10 +69,10 @@ public class App {
 				lastFolder = tempFolderRef;
 				File[] tempFolderCSVs = tempFolderRef.listFiles((dir, name) -> {
 					String nameLower = name.toLowerCase();
-					if (index == 0) //exclude ANM, EFF and Voice PAKs from the PAK filter
-					{
-						return nameLower.endsWith(".pak") && !(nameLower.contains("anm") || nameLower.contains("eff")
-								|| nameLower.contains("voice"));
+					//exclude ANM, EFF and Voice PAKs from the PAK filter
+					if (index == 0) {
+						return nameLower.endsWith(".pak") && !(nameLower.contains("anm")
+						|| nameLower.contains("eff") || nameLower.contains("voice"));
 					}
 					return nameLower.endsWith("." + FILE_TYPES[index].toLowerCase());
 				});
@@ -84,25 +82,22 @@ public class App {
 				} else {
 					errorBeep();
 					JOptionPane.showMessageDialog(chooser,
-							"This folder does NOT have " + FILE_TYPES[index] + " files! Try again!", WINDOW_TITLE, 0);
+					"This folder does NOT have " + FILE_TYPES[index] + " files! Try again!", Main.TITLE, 0);
 				}
 			} else
 				return folder;
 		}
 		return folder;
 	}
-
 	private static void errorBeep() {
 		Runnable runWinErrorSnd = (Runnable) DEF_TOOLKIT.getDesktopProperty("win.sound.exclamation");
-		if (runWinErrorSnd != null)
-			runWinErrorSnd.run();
+		if (runWinErrorSnd != null) runWinErrorSnd.run();
 	}
-
 	private static void setApplication() {
 		String[] folderSelectTooltips = { "ANM, EFF and Voice_US/Voice_JP PAK files will be excluded from the folder.",
-				"Although the tool works for WAV files of any sample rates,<br>"
-						+ "a sample rate of 24000 Hz is strongly encouraged.",
-				"Converts LPS files in a folder from Little Endian (PS2 BT2/BT3) to Big Endian (Wii BT2/BT3 or PS3 RB1/RB2) and viceversa." };
+		"Although the tool works for WAV files of any sample rates,<br>"
+		+ "a sample rate of 24000 Hz is strongly encouraged.",
+		"Converts LPS files in a folder from Little Endian (PS2 BT2/BT3) to Big Endian (Wii BT2/BT3 or PS3 RB1/RB2) and viceversa." };
 		//initialize components
 		Box threshold = Box.createHorizontalBox();
 		Box title = Box.createHorizontalBox();
@@ -111,12 +106,13 @@ public class App {
 		Image img = ICON.getScaledInstance(90, 90, Image.SCALE_SMOOTH);
 		ImageIcon imgIcon = new ImageIcon(img);
 		JButton btn = new JButton("Apply Automatic Lip-Sync");
+		JCheckBox folderCheck = new JCheckBox(HTML_DIV_START + "Extract to Folder" + HTML_DIV_END);
 		JCheckBox wiiCheck = new JCheckBox(HTML_DIV_START + "Wii/PS3 Mode" + HTML_DIV_END);
-		JFrame frame = new JFrame(WINDOW_TITLE);
+		JFrame frame = new JFrame(Main.TITLE);
 		JLabel iconLabel = new JLabel(" ");
 		JLabel thresholdLabel = new JLabel(HTML_DIV_START + "Threshold (dB):" + HTML_DIV_END);
 		JLabel titleLabel = new JLabel("<html><div style='text-align: center; color: orange;'>"
-				+ WINDOW_TITLE.replace("S G", "S<br>G") + "</div></html>");
+		+ Main.TITLE.replace("S G", "S<br>G") + "</div></html>");
 		JPanel panel = new JPanel();
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
@@ -132,19 +128,20 @@ public class App {
 		thresholdField.setMinimumSize(thresholdFieldSize);
 		thresholdField.setMaximumSize(thresholdFieldSize);
 		thresholdField.setPreferredSize(thresholdFieldSize);
-		thresholdLabel.setToolTipText("<html><div style='text-align: center;'>"
-				+ "A fixed volume level. If exceeded by any frame of the WAV,<br>"
-				+ "it determines the character is talking during that frame."
-				+ "<br>If not specified, the threshold will be set to 45 dB."
-				+ "<br><br>If dealing with WAV files from post-ADX games (which no longer"
-				+ "<br>use the ADX format), lowering the threshold is strongly encouraged."
-				+ "<br>Otherwise, for games of the Budokai, Tenkaichi or Raging Blast series,"
-				+ "<br>it is recommended to leave the threshold as is." + HTML_DIV_END);
+		folderCheck.setToolTipText(HTML_DIV_CENTER + 
+		"Writes the generated LPS files to a folder instead of a character/menu PAK." + HTML_DIV_END);
+		thresholdLabel.setToolTipText(HTML_DIV_CENTER + "A fixed volume level. If exceeded by any frame of the WAV,<br>"
+		+ "it determines the character is talking during that frame."
+		+ "<br>If not specified, the threshold will be set to 45 dB."
+		+ "<br><br>If dealing with WAV files from post-ADX games (which no longer"
+		+ "<br>use the ADX format), lowering the threshold is strongly encouraged."
+		+ "<br>Otherwise, for games of the Budokai, Tenkaichi or Raging Blast series,"
+		+ "<br>it is recommended to leave the threshold as is." + HTML_DIV_END);
 		titleLabel.setFont(BOLD);
 		wiiCheck.setToolTipText(HTML_DIV_CENTER
-				+ "This option is meant for files from the Wii version of Budokai Tenkaichi 2 & 3, and"
-				+ "<br>the PS3 version of Raging Blast 1 & 2, whose integers are in Big Endian, not Little Endian<br>"
-				+ "(which is the default byte order for the PS2 version of Budokai Tenkaichi 3)." + HTML_DIV_END);
+		+ "This option is meant for files from the Wii version of Budokai Tenkaichi 2 & 3, and"
+		+ "<br>the PS3 version of Raging Blast 1 & 2, whose integers are in Big Endian, not Little Endian<br>"
+		+ "(which is the default byte order for the PS2 version of Budokai Tenkaichi 3)." + HTML_DIV_END);
 		wiiCheck.setHorizontalAlignment(SwingConstants.CENTER);
 
 		for (int i = 0; i < 3; i++) {
@@ -156,15 +153,14 @@ public class App {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						File folder = getFolderFromFileChooser(index);
-						if (folder == null)
-							return;
-						if (index == 0) //exclude ANM, EFF and Voice PAKs from the filter
-						{
+						if (folder == null) return;
+						//exclude ANM, EFF and Voice PAKs from the filter
+						if (index == 0) {
 							pakFiles = folder.listFiles((dir, name) -> (name.toLowerCase().endsWith(".pak")
-									&& !(name.toLowerCase().contains("anm") || name.toLowerCase().contains("eff")
-											|| name.toLowerCase().contains("voice"))));
-						} else
-							wavFiles = folder.listFiles((dir, name) -> (name.toLowerCase().endsWith(".wav")));
+							&& !(name.toLowerCase().contains("anm") || name.toLowerCase().contains("eff")
+							|| name.toLowerCase().contains("voice"))));
+						} 
+						else wavFiles = folder.listFiles((dir, name) -> (name.toLowerCase().endsWith(".wav")));
 					}
 				});
 			} else {
@@ -172,8 +168,7 @@ public class App {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						File folder = getFolderFromFileChooser(index);
-						if (folder == null)
-							return;
+						if (folder == null) return;
 						File[] lpsFiles = folder.listFiles((dir, name) -> (name.toLowerCase().endsWith(".lps")));
 						try {
 							long start = System.currentTimeMillis();
@@ -182,7 +177,7 @@ public class App {
 							double time = (end - start) / 1000.0;
 							String msg = lpsFiles.length + " LPS files have been converted in " + time + " s!";
 							DEF_TOOLKIT.beep();
-							JOptionPane.showMessageDialog(null, msg, WINDOW_TITLE, 1);
+							JOptionPane.showMessageDialog(null, msg, Main.TITLE, 1);
 						} catch (IOException ex) {
 							Main.setErrorLog(ex);
 						}
@@ -224,7 +219,7 @@ public class App {
 					});
 					mainBox.add(boxes[i]);
 				}
-				JOptionPane.showMessageDialog(null, mainBox, WINDOW_TITLE, 1, imgIcon);
+				JOptionPane.showMessageDialog(null, mainBox, Main.TITLE, 1, imgIcon);
 			}
 		});
 		thresholdField.addKeyListener(new KeyAdapter() {
@@ -232,37 +227,63 @@ public class App {
 				char ch = e.getKeyChar();
 				String text = thresholdField.getText();
 				if (text.length() > 1) {
-					if (!(ch == KeyEvent.VK_DELETE || ch == KeyEvent.VK_BACK_SPACE))
-						e.consume();
+					if (!(ch == KeyEvent.VK_DELETE || ch == KeyEvent.VK_BACK_SPACE)) e.consume();
 				}
-				if (!(ch >= '0' && ch <= '9'))
-					e.consume();
+				if (!(ch >= '0' && ch <= '9')) e.consume();
 			}
 		});
 		btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				int charaId = -1;
+				boolean folderCheckEnabled = folderCheck.isSelected();
 				String errorMsg = "";
-				if (pakFiles == null || pakFiles.length == 0)
+				if (!folderCheckEnabled && (pakFiles == null || pakFiles.length == 0))
 					errorMsg += "No directory for " + FILE_TYPES[0] + " has been selected!\n";
 				if (wavFiles == null || wavFiles.length == 0)
 					errorMsg += "No directory for " + FILE_TYPES[1] + " has been selected!\n";
 				if (!errorMsg.equals("")) {
 					errorBeep();
-					JOptionPane.showMessageDialog(null, errorMsg, WINDOW_TITLE, 0);
+					JOptionPane.showMessageDialog(null, errorMsg, Main.TITLE, 0);
 				} else {
 					String thresholdText = thresholdField.getText();
 					if (!thresholdText.equals(""))
-						cmd.Main.threshold = Integer.parseInt(thresholdField.getText());
+						Main.threshold = Integer.parseInt(thresholdField.getText());
 					frame.setVisible(false);
 					frame.dispose();
-					if (wiiCheck.isSelected())
-						cmd.Main.wiiMode = true;
-					setProgress();
+					if (wiiCheck.isSelected()) Main.wiiMode = true;
+					if (folderCheckEnabled) {
+						Box box = Box.createHorizontalBox();
+						JPanel panel = new JPanel(new GridBagLayout());
+						JLabel label = new JLabel("Specify a character ID: ");
+						JTextField tf = new JTextField(3);
+						box.add(label);
+						box.add(Box.createHorizontalGlue());
+						box.add(tf);
+						tf.addKeyListener(new KeyAdapter() {
+							public void keyTyped(KeyEvent e) {
+								char ch = e.getKeyChar();
+								String text = tf.getText();
+								if (text.length() > 2) {
+									if (!(ch == KeyEvent.VK_DELETE || ch == KeyEvent.VK_BACK_SPACE)) e.consume();
+								}
+								if (!(ch >= '0' && ch <= '9')) e.consume();
+							}
+						});
+						panel.add(box, gbc);
+						JOptionPane.showConfirmDialog(null, panel, Main.TITLE, 2);
+						String input = tf.getText();
+						if (input == null) charaId = -1;
+						else if (input.matches("\\d+")) charaId = Integer.parseUnsignedInt(input);
+						else if (!input.equals("")) {
+							errorBeep();
+							JOptionPane.showMessageDialog(null, "Invalid character ID!", Main.TITLE, 0);
+						}
+					}
+					setProgress(charaId, folderCheckEnabled);
 				}
 			}
 		});
-
 		//add components
 		menuBar.add(fileMenu);
 		menuBar.add(helpMenu);
@@ -274,6 +295,7 @@ public class App {
 		panel.add(title, gbc);
 		panel.add(threshold, gbc);
 		panel.add(wiiCheck, gbc);
+		panel.add(folderCheck, gbc);
 		panel.add(btn, gbc);
 		frame.add(panel);
 		//set frame properties
@@ -281,11 +303,10 @@ public class App {
 		frame.setIconImage(ICON);
 		frame.setJMenuBar(menuBar);
 		frame.setLocationRelativeTo(null);
-		frame.setSize(512, 256);
+		frame.setSize(500, 300);
 		frame.setVisible(true);
 	}
-
-	private static void setProgress() {
+	private static void setProgress(int charaId, boolean folderCheckEnabled) {
 		//change progress bar settings (must be done before declaring)
 		UIManager.put("ProgressBar.background", Color.WHITE);
 		UIManager.put("ProgressBar.foreground", Color.GREEN);
@@ -316,32 +337,32 @@ public class App {
 		panel.add(new JLabel(" "), gbc);
 		panel.add(bar, gbc);
 		progress.add(panel);
-		progress.setTitle(WINDOW_TITLE);
+		progress.setTitle(Main.TITLE);
 		progress.setSize(512, 256);
 		progress.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		progress.setIconImage(ICON);
 		progress.setLocationRelativeTo(null);
 		progress.setVisible(true);
-
+		//initialize worker
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
 				long start = System.currentTimeMillis();
-				cmd.Main.assignLpsToPak(pakFiles, wavFiles);
+				Main.assignLpsToPak(pakFiles, wavFiles, charaId);
 				long end = System.currentTimeMillis();
 				double time = (end - start) / 1000.0;
 				progress.setVisible(false);
 				progress.dispose();
 				String msg = "";
 				int msgType = 1;
-				if (cmd.Main.hasNoValidWAVs) {
+				if (Main.hasNoValidWAVs) {
 					msg += "No valid WAVs were detected. Make sure they follow this naming convention:\n"
 							+ "X-YYY-ZZ.wav\nX ---> Name (of a character, menu, scenario etc.);\n"
 							+ "YYY -> Number up to 3 digits (which will be used for the audio file ID);\n"
 							+ "ZZ --> Region (either US or JP, which matters for character costumes or LPS PAKs from Dragon History).\n";
 					msgType = 0;
 				}
-				if (cmd.Main.validPaks == 0) {
+				if (Main.validPaks == 0 && !folderCheckEnabled) {
 					msg += "No valid PAKs were detected. Make sure they are either:\n"
 							+ "a) Character Costume Files (that must end with" + '"' + "Xp.pak" + '"' + " or " + '"'
 							+ "Xp_dmg.pak" + '"' + ", where X represents the costume number);\n"
@@ -350,26 +371,24 @@ public class App {
 							+ "c) Literally any other PAK that starts/ends with LPS, or contains LIPS somewhere in its name.\n";
 					msgType = 0;
 				}
-				if (msg.equals(""))
+				if (msg.equals("")) {
 					msg = "Automatic Lip-Syncing of " + Main.validWavs + " WAV files applied to " + Main.validPaks
-							+ " PAK files in " + time + " s!";
-				if (msgType == 1)
-					DEF_TOOLKIT.beep();
-				else
-					errorBeep();
-				JOptionPane.showMessageDialog(null, msg, WINDOW_TITLE, msgType);
+					+ " PAK files in " + time + " s!";
+					if (folderCheckEnabled) msg = msg.replace(" to 0 PAK files", "");
+				}
+				if (msgType == 1) DEF_TOOLKIT.beep();
+				else errorBeep();
+				JOptionPane.showMessageDialog(null, msg, Main.TITLE, msgType);
 				return null;
 			}
 		};
 		worker.execute();
 	}
-
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			setApplication();
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-				| UnsupportedLookAndFeelException e) {
+		} catch (Exception e) {
 			Main.setErrorLog(e);
 		}
 	}

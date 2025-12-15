@@ -5,6 +5,7 @@ To run it from the terminal (or Command Prompt), type in the following command: 
 
 Other arguments can be used, such as:
 * ``-d`` (to disable keyframe filtering, which **will result in bigger LPS** files but **prevents rare softlocks**);
+* ``-f`` (to **extract** the generated LPS **in a folder**, instead of applying them to the character/menu PAKs);
 * ``-p`` / ``-ps2`` (short for **PS2**);
 * ``-s`` / ``-swap`` (to **convert Little Endian LPS files to Big Endian ones** and vice-versa);
 * ``-w`` / ``-wii`` (to **enable Big Endian** support; w is short for **Wii**, though the Big Endian byte order is also used by **Raging Blast 1 & 2** for the **PS3**).
