@@ -1,5 +1,5 @@
 package cmd;
-//Little Endian class by ViveTheModder
+//Little Endian class by ViveTheJoestar
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 

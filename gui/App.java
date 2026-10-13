@@ -1,5 +1,5 @@
 package gui;
-//Tenkaichi LPS Generator v1.9 by ViveTheJoestar
+//Tenkaichi LPS Generator v1.9.1 by ViveTheJoestar
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -143,7 +143,6 @@ public class App {
 		+ "<br>the PS3 version of Raging Blast 1 & 2, whose integers are in Big Endian, not Little Endian<br>"
 		+ "(which is the default byte order for the PS2 version of Budokai Tenkaichi 3)." + HTML_DIV_END);
 		wiiCheck.setHorizontalAlignment(SwingConstants.CENTER);
-
 		for (int i = 0; i < 3; i++) {
 			final int index = i;
 			folderSelects[i] = new JMenuItem("Select Folder with " + FILE_TYPES[i] + " files...");
@@ -192,13 +191,17 @@ public class App {
 			public void actionPerformed(ActionEvent e) {
 				Box[] boxes = new Box[3];
 				Box mainBox = Box.createVerticalBox();
-				String[] authorLinks = { "https://github.com/ViveTheModder", "https://www.youtube.com/@nero_149",
-						"https://www.youtube.com/@pxgamer13" };
+				String[] authorLinks = { 
+						"https://github.com/ViveTheModder", 
+						"https://www.youtube.com/@nero_149",
+						"https://www.youtube.com/@pxgamer13"
+				};
 				String[] text = { "Made by: ", "Initial LPS research done by: ", "Greatly inspired (with spite) by: " };
-				JLabel[] authors = { new JLabel(HTML_A_START + "ViveTheModder" + HTML_A_END),
+				JLabel[] authors = { 
+						new JLabel(HTML_A_START + "ViveTheJoestar" + HTML_A_END),
 						new JLabel(HTML_A_START + "Nero149" + HTML_A_END),
-						new JLabel(HTML_A_START + "Pxgamer13" + HTML_A_END) };
-
+						new JLabel(HTML_A_START + "Pxgamer13" + HTML_A_END)
+				};
 				for (int i = 0; i < authors.length; i++) {
 					final int index = i;
 					boxes[i] = Box.createHorizontalBox();

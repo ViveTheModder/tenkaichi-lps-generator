@@ -1,5 +1,5 @@
 package cmd;
-//Tenkaichi LPS Generator v1.9 by ViveTheJoestar
+//Tenkaichi LPS Generator v1.9.1 by ViveTheJoestar
 import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
@@ -20,7 +20,7 @@ public class Main {
 	public static boolean hasNoValidWAVs = false, disableFilter = false, wiiMode = false;
 	static boolean startsClosed = false; //condition of 1st keyframe (closed/true or open/false)
 	public static int numPakContents, pakTotal = 0, progBarMax = 0, threshold = 45, validPaks = 0, validWavs = 0, wavTotal = 0;
-	public static final String TITLE = "Tenkaichi LPS Generator v1.9";
+	public static final String TITLE = "Tenkaichi LPS Generator v1.9.1";
 
 	private static boolean isCharaCostumePak(File pakRef) throws IOException {
 		RandomAccessFile pak = new RandomAccessFile(pakRef, "r");
@@ -36,12 +36,11 @@ public class Main {
 		short fileSize = (short) (16 + (numKeyframes * 4));
 		short mouthCondBoolean = 1;
 		if (startsClosed == true) mouthCondBoolean = 0;
-		//make lps file size the nearest multiple of 16
+		//make LPS file size the nearest multiple of 16
 		if (fileSize % 64 != 0) fileSize = (short) (fileSize + 64 - (fileSize % 64));
 		byte[] lps = new byte[fileSize];
 		byte[] LIPS = {0x4C, 0x49, 0x50, 0x53};
-		if (wiiMode)
-			LIPS[3] = 0x57; //change S to W if Wii/RB mode is enabled
+		if (wiiMode) LIPS[3] = 0x57; //change S to W if Wii/RB mode is enabled
 		System.arraycopy(LIPS, 0, lps, 0, 4);
 		System.arraycopy(LittleEndian.getByteArrayFromInt(2), 0, lps, 4, 4);
 		System.arraycopy(LittleEndian.getByteArrayFromInt(numKeyframes), 0, lps, 8, 4);
@@ -75,12 +74,11 @@ public class Main {
 				sampleSum += sample * sample; //sum of squares
 			}
 			double rms = Math.sqrt((double) sampleSum / numBytesPerFrame); //root mean square
-			if (i == 0 && rms == 0) startsClosed = true; //0 rms means the volume is -Infinity dB
+			if (i == 0 && rms == 0) startsClosed = true; //0 RMS means the volume is -Infinity dB
 			double db = 20 * Math.log10(rms); //decibels
 			double time = i / 24000.0; //current fraction of a second
 			short currFrame = (short) Math.round(time * 60);
-			//test open & closed ranges by filtering the results (this could also be done
-			//with a boolean variable lol)
+			//test open & closed ranges by filtering the results (this could also be done with a boolean variable lol)
 			if (db < threshold) mouthCond = "Closed";
 			else mouthCond = "Open";
 			if (prevFrame != currFrame) {
@@ -122,17 +120,13 @@ public class Main {
 			}
 			String langFromWav = wavNameArray[wavNameArray.length - 1];
 			//check if name ends with US/JP (region) to then get the WAV ID (zero-indexed)
-			if (wavName.endsWith("us") || wavName.endsWith("jp"))
-				wavID = Integer.parseInt(wavNameArray[wavNameArray.length - 2]);
-			else if (wavName.matches("[A-Za-z0-9]+"))
-				wavID = Integer.parseInt(wavNameArray[wavNameArray.length - 1]);
+			if (wavName.endsWith("us") || wavName.endsWith("jp")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length - 2]);
+			else if (wavName.matches("[A-Za-z0-9]+")) wavID = Integer.parseInt(wavNameArray[wavNameArray.length - 1]);
 			else continue; //skip WAV files containing special characters or no WAV IDs (numbers) at all
-
 			for (int i = 0; i < keyframes.length; i += 2) {
 				if (startsClosed == true) displacement = 1;
 				if (intervalIndex < openMouthIntervals.length)
-					openMouthIntervals[intervalIndex] = (short) (keyframes[i + 1 + displacement]
-							- keyframes[i + displacement]);
+					openMouthIntervals[intervalIndex] = (short) (keyframes[i + 1 + displacement] - keyframes[i + displacement]);
 				intervalIndex++;
 			}
 			int numKeyframes = keyframes.length;
@@ -157,8 +151,7 @@ public class Main {
 				validWavs++;
 				boolean isCharaLps = charaId > -1;
 				String lpsName = writeLpsFile(parent, lpsContents, wavID, charaId, langFromWav, isCharaLps);
-				System.out.println("Finished writing to new LPS file (" + lpsName + ")"
-				+ " from " + wavName.toUpperCase() + ".WAV!");
+				System.out.println("Finished writing to new LPS file (" + lpsName + ")" + " from " + wavName.toUpperCase() + ".WAV!");
 				App.bar.setValue(validWavs);
 				continue;
 			}
@@ -181,8 +174,7 @@ public class Main {
 					if (charaNameFromPak.equals(charaNameFromWav)) {
 						validWavs++;
 						App.bar.setMaximum(progBarMax -= 2);
-						System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to "
-						+ pakName.toUpperCase() + "...");
+						System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to " + pakName.toUpperCase() + "...");
 						overwritePakFile(pak, lpsContents, newWavID);
 						cnt += 2;
 					}
@@ -194,21 +186,18 @@ public class Main {
 						String charaNameFromWav = wavName.substring(0, wavName.length() - 7).toLowerCase();
 						String[] pakNameArray = pakName.split("_");
 						String langFromPak = pakNameArray[pakNameArray.length - 1].replace(".pak", "");
-
 						int newWavID = wavID % 500;
 						if (charaNameFromPak.equals(charaNameFromWav) && langFromPak.equals(langFromWav)) {
 							validWavs++;
 							App.bar.setMaximum(progBarMax -= 2);
-							System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to "
-							+ pakName.toUpperCase() + "...");
+							System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to " + pakName.toUpperCase() + "...");
 							overwritePakFile(pak, lpsContents, newWavID);
 							cnt += 2;
 						}
 					} 
 					//check if WAV is from story mode (VIC -> Voice In Cutscene?)
 					else if (wavNameArray[0].equals("vic")) {
-						if (validPaks < pakTotal)
-							validPaks++;
+						if (validPaks < pakTotal) validPaks++;
 						String[] pakNameArray = pakName.split("-");
 						int pakID = Integer.parseInt(pakNameArray[pakNameArray.length - 1].replace(".pak", ""));
 						int gscID = Integer.parseInt(wavNameArray[1]);
@@ -216,8 +205,7 @@ public class Main {
 						if (langFromPak.equals(wavNameArray[wavNameArray.length - 1]) && pakID == gscID) {
 							validWavs++;
 							App.bar.setMaximum(progBarMax -= 2);
-							System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to "
-							+ pakName.toUpperCase() + "...");
+							System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to " + pakName.toUpperCase() + "...");
 							overwritePakFile(pak, lpsContents, wavID);
 							cnt += 2;
 						}
@@ -229,8 +217,7 @@ public class Main {
 					else if (langFromWav.endsWith("jp")) newWavID = 2 * wavID;
 					validWavs++;
 					App.bar.setMaximum(progBarMax -= 2);
-					System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to "
-					+ pakName.toUpperCase() + "...");
+					System.out.println("Assigning generated LPS (from " + wavName.toUpperCase() + ".WAV) to " + pakName.toUpperCase() + "...");
 					overwritePakFile(pak, lpsContents, newWavID);
 					cnt += 2;
 				}
@@ -246,14 +233,13 @@ public class Main {
 		int[] sizes = new int[numSizes];
 		int tempPos = 0;
 		//initialize positions and sizes
-		for (int i=1; i<=numSizes; i++) {
-			if (tempPos==0) positions[i-1] = LittleEndian.getInt(pak.readInt()); //current position
-			else positions[i-1] = tempPos;
+		for (int i = 1; i <= numSizes; i++) {
+			if (tempPos == 0) positions[i - 1] = LittleEndian.getInt(pak.readInt()); //current position
+			else positions[i - 1] = tempPos;
 			positions[i] = LittleEndian.getInt(pak.readInt()); //next position
 			tempPos = positions[i]; //temporary position which exists to prevent reading the same positions twice
-			sizes[i-1] = positions[i] - positions[i-1];
+			sizes[i - 1] = positions[i] - positions[i-1];
 		}
-
 		int difference = sizes[id] - lpsContents.length;
 		if (difference != 0) {
 			//fix index
@@ -339,7 +325,7 @@ public class Main {
 					lpsFiles[i].write(intInput);
 				}
 			}
-			for (int pos = 16; pos < lpsFiles[i].length() - 16; pos += 2) {
+			for (int pos = 16; pos < lpsFiles[i].length(); pos += 2) {
 				lpsFiles[i].seek(pos);
 				lpsFiles[i].read(shortInput);
 				lpsFiles[i].seek(pos);
